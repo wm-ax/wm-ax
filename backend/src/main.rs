@@ -20,7 +20,9 @@ use rocket_contrib::json::{Json, JsonValue};
 use rocket::response::content;
 // use serde_json::json;
 
+use rocket::http::Method;
 use rocket_cors;
+use rocket_cors::{AllowedHeaders, AllowedOrigins, Error};
 
 #[derive(Serialize, Deserialize)]
 struct Article {
@@ -118,8 +120,21 @@ fn not_found() -> JsonValue {
 
 
 
-fn rocket() -> rocket::Rocket {
 
+fn main() -> Result<(), Error> {
+
+   let allowed_origins = AllowedOrigins::all();
+
+    // You can also deserialize this
+    let cors = rocket_cors::CorsOptions {
+        allowed_origins,
+        allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
+        allowed_headers: AllowedHeaders::all(),
+        // allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
+        allow_credentials: true,
+        ..Default::default()
+    }
+    .to_cors()?;
     
     rocket::ignite()
         .mount("/api", routes![
@@ -128,23 +143,11 @@ fn rocket() -> rocket::Rocket {
         ])
         .register(catchers![not_found])
         .manage(Mutex::new(HashMap::<String, String>::new()))
+        .attach(cors)
+        .launch();
+
+    Ok(())
+
 }
 
 
-fn main() {
-    rocket().launch();
-    // rocket::ignite().mount("/api", routes![
-    //     // index,
-    //     search,
-    //     article_create, article_edit, article_detail, article_list,
-    // ]).launch();
-}
-
-
-
-
-// #[get("/")]
-// fn index() -> &'static str {
-//     // react app goes here
-//     "hi guys!"
-// }
