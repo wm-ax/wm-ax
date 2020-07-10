@@ -4,11 +4,69 @@ frameworks
 back-end: REST API with Rocket.rs
 front-end: React, Tachyons
 
+
+
+
+
+design (0.1)
+============
+
+  * Article: can be created and edited by author and by admin
+      * can be published/unpublished, maybe also deleted
+
+views
+-----
+
+for posts:
+    * create
+    * edit
+    * read
+    * list
+
+
+api (0.1)
+---
+
+root: "/api/articles"
+
+list:
+    method: GET
+    url: "/"
+compose: 
+    method: POST
+    url: "/"
+edit:
+    method: PUT
+    url: "/<slug>"
+detail:
+    method: GET
+    url: "/<slug>"
+
+user-facing urls
+----
+
+list: "/"
+compose: "/compose"
+edit: "/edit/<slug>"
+detail: "/<slug>"
+
+
+
+
+
+
+
+frameworks
+--------------
+
+back-end: REST API with Rocket.rs
+front-end: React, Tachyons
+
 design
 ------
 
 basic concepts are
-  * post: can be created and edited by author and by admin
+  * Article: can be created and edited by author and by admin
       * can be published/unpublished, maybe also deleted
   * tag: created/edited by admin
   * tab:
@@ -16,31 +74,34 @@ basic concepts are
 
 - blog divides into tabs
     - tabs are created/edited/deleted by user
-    - each post falls under exactly one tab
+    - each article falls under exactly one tab
     - each tab has its own access properties
 
 api
 ---
 
 POST
-  * create/edit post
-  * create/edit tab
+  * create article
+  * create tab
   * create/edit/unpublish (author) profile
+PUT
+  * edit article
+  * edit tab
 GET
-  * list all posts under a tab, in some order
-  * read a given post
+  * list all articles under a tab, in some order
+  * read a given article
   * search for given string
-  * list all posts with a given tag
+  * list all articles with a given tag
   * read author profile
 
 
-urls
+user-facing urls
 ----
 
 /author_screen_name
 /search?p=<search-term>
 /<tab_name>/compose
-/<tab_name>/<post_title_slug>
-/<tab_name>/<post_title_slug>/edit
+/<tab_name>/<article_title_slug>
+/<tab_name>/<article_title_slug>/edit
 
 

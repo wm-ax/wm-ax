@@ -1,4 +1,5 @@
-#[derive(Queryable)]
+
+#[derive(Queryable, Serialize, Deserialize)]
 pub struct Article {
     pub id: i32,
     pub title: String,

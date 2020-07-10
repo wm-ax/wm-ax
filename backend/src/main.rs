@@ -7,13 +7,13 @@ use itertools::Itertools;
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate rocket_contrib;
 #[macro_use] extern crate serde_derive;
-// extern crate slug;
+extern crate slug;
 
 #[cfg(test)] mod tests;
 
 use std::sync::Mutex;
 use std::collections::HashMap;
-// use slug::slugify;
+use slug::slugify;
 
 use rocket::State;
 use rocket_contrib::json::{Json, JsonValue};
@@ -24,28 +24,67 @@ use rocket::http::Method;
 use rocket_cors;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Error};
 
-#[derive(Serialize, Deserialize)]
+
+
+
+
+
+const LIMIT: u64 = 256;
+
+
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct Article {
+    title: String,
     slug: String,
-    content: String
+    content: String,
 }
 
-type ArticleMap = Mutex<HashMap<String, String>>;
+#[derive(Serialize, Deserialize, Clone, Debug)]
+struct ArticleStarter {
+    title: String,
+    content: String,
+}
 
-// API
+
+impl From<ArticleStarter>  for Article {
+    fn from(starter: ArticleStarter) -> Self {
+        Article {title: starter.title.clone(),
+                 content: starter.content,
+                 slug: slugify(starter.title)}
+    }
+}
+
+// impl Article {
+//     // pub fn new(title: String, content: String) -> Article {
+//         // Article {title:title.clone(), content, slug:slugify(title)}
+//     // }
+//     pub fn from(starter: ArticleStarter) {
+//         Article {title: starter.title.clone(),
+//                  content,
+//                  slug: slugify(title)}
+//     }
+// }
 
 
-#[post("/article", format = "json", data = "<article>")]
-fn article_create(article: Json<Article>, map: State<ArticleMap>) -> JsonValue {
+
+
+
+type ArticleMap = Mutex<HashMap<String, Article>>;
+
+
+#[post("/article", data = "<article>")]
+fn article_create(article: Json<ArticleStarter>, map: State<ArticleMap>) -> JsonValue {
     let mut hashmap = map.lock().expect("map lock");
-    let slug = &article.slug;
-    if hashmap.contains_key(slug) {
+    let slug = slugify(&article.title);
+    print!("received this article: {:?}", article);
+    if hashmap.contains_key(&slug) {
         json!({
             "status": "error",
-            "reason": "an article with that slug already exists",
+            "reason": "an article with that (slugified) title already exists",
         })
     } else {
-            hashmap.insert(slug.clone(), article.content.clone());
+        hashmap.insert(slug, article.0.into());
         json!({"status": "ok"})
     }
 }
@@ -55,9 +94,9 @@ fn article_create(article: Json<Article>, map: State<ArticleMap>) -> JsonValue {
 fn article_edit(article: Json<Article>, map: State<ArticleMap>)
                 -> JsonValue {
     let mut hashmap = map.lock().unwrap();
-    let slug = &article.slug;
-    if hashmap.contains_key(slug) { 
-        hashmap.insert(slug.clone(), article.content.clone());
+    let slug = slugify(article.title.clone());
+    if hashmap.contains_key(&slug) { 
+        hashmap.insert(slug.to_string(), article.0);
         json!({"status": "ok"})
     }
     else {
@@ -75,11 +114,8 @@ fn article_edit(article: Json<Article>, map: State<ArticleMap>)
 fn article_detail(slug: String, map: State<ArticleMap>) -> Option<Json<Article>> {
     let hashmap = map.lock().unwrap();
     // hashmap.insert("dummytitle1".to_string(), "thedummycontent1".to_string());
-    hashmap.get(&slug).map(
-        |content| {
-            // Json(Article::from(article.clone()))
-            Json(Article{slug, content:content.clone()})
-        }
+    hashmap.get(&slug)
+        .map(|article| {Json(article.clone())}
     )
 }
 
@@ -94,10 +130,10 @@ fn article_list(map: State<ArticleMap>) -> Json<Vec<Article>> {
 
     let hashmap = map.lock().unwrap();
 
-    let articles = hashmap.iter().map(
-        |(slug, content)|{
-            Article{slug:slug.to_string(), content:content.to_string()}
-        }).collect::<Vec<Article>>();
+    let articles = hashmap.values()
+        .map(|article| { article.clone() })
+        .collect::<Vec<Article>>();
+    print!("{:?}", articles);
     Json(articles)
 }
 
@@ -142,7 +178,7 @@ fn main() -> Result<(), Error> {
             article_create, article_edit, article_detail, article_list,
         ])
         .register(catchers![not_found])
-        .manage(Mutex::new(HashMap::<String, String>::new()))
+        .manage(Mutex::new(HashMap::<String, Article>::new()))
         .attach(cors)
         .launch();
 
