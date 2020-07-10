@@ -21,9 +21,7 @@ const Router = ({className}) =>
         />
         <Route exact path="/"
                render={(props)=>
-                       <LatestPosts
-                         {...props}
-                       />}
+                       <LatestPosts/>}
         />
       </Switch>
       </BrowserRouter>
