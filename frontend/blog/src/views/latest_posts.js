@@ -1,8 +1,8 @@
 import React, { Component, useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
-
-const API_URL = `http://localhost:8000/api`;
+import { API_URL } from '../settings.js';
 
 const ENDPOINT_URL = `/article`;
 
@@ -39,18 +39,17 @@ function LatestPosts(props) {
               [URL]);
 
 
-    return posts == [] ? "no posts found" : (
+    return posts === [] ? "no posts found" : (
         <ol>
           {posts.map(
               (post) =>
                   <div>
                     <li>
                       <h3>
-                        {post.title}
+                        <Link to={'articles/'+post.slug}>
+                          {post.title}
+                        </Link>
                       </h3>
-                      <p>
-                        {post.content}
-                      </p>
                     </li>
                   </div>
           )}

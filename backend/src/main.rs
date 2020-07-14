@@ -112,11 +112,14 @@ fn article_edit(article: Json<Article>, map: State<ArticleMap>)
 
 #[get("/article/<slug>")]
 fn article_detail(slug: String, map: State<ArticleMap>) -> Option<Json<Article>> {
+    print!("ARTICLE_DETAIL!");
     let hashmap = map.lock().unwrap();
     // hashmap.insert("dummytitle1".to_string(), "thedummycontent1".to_string());
-    hashmap.get(&slug)
+    let article = hashmap.get(&slug)
         .map(|article| {Json(article.clone())}
-    )
+        );
+    print!("{:?}", article);
+    article
 }
 
 
@@ -164,7 +167,8 @@ fn main() -> Result<(), Error> {
     // You can also deserialize this
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
-        allowed_methods: vec![Method::Get, Method::Post].into_iter().map(From::from).collect(),
+        allowed_methods: vec![Method::Get, Method::Post].into_iter()
+            .map(From::from).collect(),
         allowed_headers: AllowedHeaders::all(),
         // allowed_headers: AllowedHeaders::some(&["Authorization", "Accept"]),
         allow_credentials: true,
@@ -174,7 +178,7 @@ fn main() -> Result<(), Error> {
     
     rocket::ignite()
         .mount("/api", routes![
-            search,
+            // search,
             article_create, article_edit, article_detail, article_list,
         ])
         .register(catchers![not_found])

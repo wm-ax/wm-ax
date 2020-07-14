@@ -6,6 +6,8 @@ const LOCAL_ROCKET = {
     AXIOS : axios,
 }
 
+export const API_URL = `http://localhost:8000/api`;
+
 // const FOR_PRISM = {
 //     API_URL : 'http://127.0.0.1:4010/api',
 //     axios_with_credentials : false,

@@ -11,7 +11,7 @@ const App = () =>
           <meta charSet="utf-8" />
           <title>MMW</title>
         </Helmet>
-        <h1>hi</h1>
+        <h1>the app</h1>
         {/* <OuterHeader/> */}
         <Router/>
       </div>; 
