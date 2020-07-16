@@ -17,11 +17,11 @@ const Router = ({className}) =>
             <Route exact path="/">
               <LatestPosts/>
             </Route>
-            <Route path="/articles/new">
+            <Route exact path="/articles/new">
               <NewPost/>
             </Route>
-            <Route>
-              <PostDetail  slug="a-first-post"/>
+            <Route exact path="/articles/:slug" component={PostDetail}>
+              {/* <PostDetail slug=slug/> */}
             </Route>
           </Switch>
         </BrowserRouter>

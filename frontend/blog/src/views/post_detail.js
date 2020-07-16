@@ -8,7 +8,7 @@ function PostDetail(props) {
 
     const [post, setPost] = useState(null);
 
-    let slug = props.slug;
+    let slug = props.match.params.slug;
 
     const endpoint_url = API_URL + `/article/${slug}`;
 
@@ -33,7 +33,6 @@ function PostDetail(props) {
         </div>
     );
 }
-
 
 
 

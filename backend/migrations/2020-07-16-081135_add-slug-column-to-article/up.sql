@@ -1,0 +1,2 @@
+ALTER TABLE articles
+      ADD COLUMN slug VARCHAR NOT NULL UNIQUE;

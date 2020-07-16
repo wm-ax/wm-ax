@@ -17,7 +17,7 @@ use slug::slugify;
 
 use rocket::State;
 use rocket_contrib::json::{Json, JsonValue};
-use rocket::response::content;
+// use rocket::response::content;
 // use serde_json::json;
 
 use rocket::http::Method;
@@ -25,44 +25,58 @@ use rocket_cors;
 use rocket_cors::{AllowedHeaders, AllowedOrigins, Error};
 
 
+#[macro_use]
+extern crate diesel;
+extern crate dotenv;
 
+use diesel::prelude::*;
+use diesel::pg::PgConnection;
+use dotenv::dotenv;
+use std::env;
 
 
 
 const LIMIT: u64 = 256;
 
 
+pub mod schema;
+// pub mod models;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, Queryable)]
 struct Article {
+    id: i32,
     title: String,
+    content: String,
+    published: bool,
     slug: String,
-    content: String,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-struct ArticleStarter {
-    title: String,
-    content: String,
 }
 
 
-impl From<ArticleStarter>  for Article {
-    fn from(starter: ArticleStarter) -> Self {
-        Article {title: starter.title.clone(),
-                 content: starter.content,
-                 slug: slugify(starter.title)}
-    }
+use schema::articles;
+
+// #[derive(Serialize, Deserialize, Clone, Debug, Insertable)]
+// #[table_name="articles"]
+// struct ArticleStarter {
+//     title: str,
+//     content: str,
+// }
+
+
+#[derive(Serialize, Deserialize, Clone, Debug, Insertable)]
+#[table_name="articles"]
+struct ArticleStarter<'a> {
+    title: &'a str,
+    content: &'a str,
 }
 
-// impl Article {
-//     // pub fn new(title: String, content: String) -> Article {
-//         // Article {title:title.clone(), content, slug:slugify(title)}
-//     // }
-//     pub fn from(starter: ArticleStarter) {
-//         Article {title: starter.title.clone(),
-//                  content,
-//                  slug: slugify(title)}
+
+// impl <'a> From<ArticleStarter>  for Article {
+//     fn from(starter: ArticleStarter) -> Self {
+//         Article {title: starter.title.to_string(),
+//                  content: starter.content,
+//                  slug: slugify(starter.title)}
 //     }
 // }
 
@@ -70,24 +84,83 @@ impl From<ArticleStarter>  for Article {
 
 
 
+
+pub fn establish_connection() -> PgConnection {
+    dotenv().ok();
+
+    let database_url = env::var("DATABASE_URL")
+        .expect("DATABASE_URL must be set");
+    PgConnection::establish(&database_url)
+        .expect(&format!("Error connecting to {}", database_url))
+}
+
+
+
 type ArticleMap = Mutex<HashMap<String, Article>>;
 
+fn insert_article_into_db<'a>(conn: &PgConnection, new_article: ArticleStarter)
+                              -> Article {
+    // use schema::articles;
 
-#[post("/article", data = "<article>")]
-fn article_create(article: Json<ArticleStarter>, map: State<ArticleMap>) -> JsonValue {
-    let mut hashmap = map.lock().expect("map lock");
-    let slug = slugify(&article.title);
-    print!("received this article: {:?}", article);
-    if hashmap.contains_key(&slug) {
-        json!({
-            "status": "error",
-            "reason": "an article with that (slugified) title already exists",
-        })
-    } else {
-        hashmap.insert(slug, article.0.into());
-        json!({"status": "ok"})
-    }
+    // let new_article = ArticleStarter {
+    //     title: title,
+    //     content: content,
+    // };
+
+    diesel::insert_into(articles::table)
+        .values(&new_article)
+        .get_result(conn)
+        .expect("Error saving article")
 }
+
+#[post("/article", data = "<new_article>")]
+fn article_create(new_article: Json<ArticleStarter>, map: State<ArticleMap>)
+                  -> JsonValue {
+
+    let conn = establish_connection();
+
+    // let article = diesel::insert_into(articles::table)
+    //     .values(&new_article)
+    //     .get_result(&conn)
+    //     .expect("Error saving article");
+
+    let article = insert_article_into_db(&conn, new_article.0.into());
+
+    json!({"status": "Ok"})
+    // let mut hashmap = map.lock().expect("map lock");
+    // let slug = slugify(&article.title);
+    // print!("received this article: {:?}", article);
+    // if hashmap.contains_key(&slug) {
+    //     json!({
+    //         "status": "error",
+    //         "reason": "an article with that (slugified) title already exists",
+    //     })
+    // } else {
+    //     // hashmap.insert(slug, article.0.into());
+    //     json!({"status": "ok"})
+    // }
+
+}
+
+// #[post("/article", data = "<article>")]
+// fn article_create(article: Json<ArticleStarter>, map: State<ArticleMap>) -> JsonValue {
+//     let mut hashmap = map.lock().expect("map lock");
+//     let slug = slugify(&article.title);
+//     print!("received this article: {:?}", article);
+//     if hashmap.contains_key(&slug) {
+//         json!({
+//             "status": "error",
+//             "reason": "an article with that (slugified) title already exists",
+//         })
+//     } else {
+//         // hashmap.insert(slug, article.0.into());
+//         json!({"status": "ok"})
+//     }
+// }
+
+
+
+
 
 
 #[put("/article", format = "json", data="<article>")]
@@ -110,35 +183,37 @@ fn article_edit(article: Json<Article>, map: State<ArticleMap>)
 }
 
 
-#[get("/article/<slug>")]
-fn article_detail(slug: String, map: State<ArticleMap>) -> Option<Json<Article>> {
-    print!("ARTICLE_DETAIL!");
-    let hashmap = map.lock().unwrap();
-    // hashmap.insert("dummytitle1".to_string(), "thedummycontent1".to_string());
-    let article = hashmap.get(&slug)
-        .map(|article| {Json(article.clone())}
-        );
-    print!("{:?}", article);
-    article
+#[get("/article/<sought_slug>")]
+fn article_detail(sought_slug: String, map: State<ArticleMap>) -> Json<Article> {
+
+    use schema::articles::dsl::*;
+
+    let connection = establish_connection();
+
+    let article = articles.filter(id.eq(1))
+        .load::<Article>(&connection)
+        .expect("Couldn't load article");
+
+    Json(article[1].clone())
 }
 
-
-// #[get("/")]
-// fn article_list() -> content::Json<&'static str> {
-//     content::Json("{ 'hi': 'world' }")
-// }
 
 #[get("/article")]
 fn article_list(map: State<ArticleMap>) -> Json<Vec<Article>> {
 
-    let hashmap = map.lock().unwrap();
+    use schema::articles::dsl::*;
 
-    let articles = hashmap.values()
-        .map(|article| { article.clone() })
-        .collect::<Vec<Article>>();
-    print!("{:?}", articles);
-    Json(articles)
+    let connection = establish_connection();
+    let results = articles
+        .filter(published.eq(true))
+        // .limit(5)
+        .load::<Article>(&connection)
+        .expect("Error loading posts");
+        
+    Json(results)
 }
+
+
 
 
 #[get("/search?<q>")]
@@ -155,6 +230,10 @@ fn not_found() -> JsonValue {
         "reason": "nothing here."
     })
 }
+
+
+
+
 
 
 
