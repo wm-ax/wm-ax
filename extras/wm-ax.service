@@ -5,7 +5,7 @@ User=www-data
 Group=www-data
 WorkingDirectory=/home/mw/wm-ax/backend/
 Environment="ROCKET_ENV=prod"
-Environment="ROCKET_ADDRESS=0.0.0.0"
+Environment="ROCKET_ADDRESS=127.0.0.1"
 Environment="ROCKET_PORT=8000"
 Environment="ROCKET_LOG=critical"
 ExecStart=/home/mw/wm-ax/backend/target/release/blog
