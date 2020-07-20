@@ -3,11 +3,11 @@ Description=Rust Web Application Service
 [Service]
 User=www-data
 Group=www-data
-WorkingDirectory=/home/admin/wm-ax/backend/
+WorkingDirectory=/home/mw/wm-ax/backend/
 Environment="ROCKET_ENV=prod"
 Environment="ROCKET_ADDRESS=0.0.0.0"
 Environment="ROCKET_PORT=8000"
 Environment="ROCKET_LOG=critical"
-ExecStart=/home/admin/wm-ax/backend/target/release/blog
+ExecStart=/home/mw/wm-ax/backend/target/release/blog
 [Install]
 WantedBy=multi-user.target
