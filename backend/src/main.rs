@@ -96,7 +96,7 @@ pub fn establish_connection() -> PgConnection {
 
 
 
-type ArticleMap = Mutex<HashMap<String, Article>>;
+// type ArticleMap = Mutex<HashMap<String, Article>>;
 
 fn insert_article_into_db<'a>(conn: &PgConnection, new_article: ArticleStarter)
                               -> Article {
@@ -114,7 +114,7 @@ fn insert_article_into_db<'a>(conn: &PgConnection, new_article: ArticleStarter)
 }
 
 #[post("/article", data = "<new_article>")]
-fn article_create(new_article: Json<ArticleStarter>, map: State<ArticleMap>)
+fn article_create(new_article: Json<ArticleStarter>)
                   -> JsonValue {
 
     let conn = establish_connection();
@@ -163,28 +163,28 @@ fn article_create(new_article: Json<ArticleStarter>, map: State<ArticleMap>)
 
 
 
-#[put("/article", format = "json", data="<article>")]
-fn article_edit(article: Json<Article>, map: State<ArticleMap>)
-                -> JsonValue {
-    let mut hashmap = map.lock().unwrap();
-    let slug = slugify(article.title.clone());
-    if hashmap.contains_key(&slug) { 
-        hashmap.insert(slug.to_string(), article.0);
-        json!({"status": "ok"})
-    }
-    else {
-        {
-            json!({"status": "error",
-                   "reason": format!("there is no article with the slug {}\n the keys available are {}",
-                                     slug,
-                                     hashmap.keys().join("\n\t"))})
-        }
-    }
-}
+// #[put("/article", format = "json", data="<article>")]
+// fn article_edit(article: Json<Article>)
+//                 -> JsonValue {
+//     let mut hashmap = map.lock().unwrap();
+//     let slug = slugify(article.title.clone());
+//     if hashmap.contains_key(&slug) { 
+//         hashmap.insert(slug.to_string(), article.0);
+//         json!({"status": "ok"})
+//     }
+//     else {
+//         {
+//             json!({"status": "error",
+//                    "reason": format!("there is no article with the slug {}\n the keys available are {}",
+//                                      slug,
+//                                      hashmap.keys().join("\n\t"))})
+//         }
+//     }
+// }
 
 
 #[get("/article/<sought_slug>")]
-fn article_detail(sought_slug: String, map: State<ArticleMap>) -> Json<Article> {
+fn article_detail(sought_slug: String) -> Json<Article> {
 
     use schema::articles::dsl::*;
 
@@ -199,7 +199,7 @@ fn article_detail(sought_slug: String, map: State<ArticleMap>) -> Json<Article> 
 
 
 #[get("/article")]
-fn article_list(map: State<ArticleMap>) -> Json<Vec<Article>> {
+fn article_list() -> Json<Vec<Article>> {
 
     use schema::articles::dsl::*;
 
@@ -261,7 +261,6 @@ fn main() -> Result<(), Error> {
             article_create, article_edit, article_detail, article_list,
         ])
         .register(catchers![not_found])
-        .manage(Mutex::new(HashMap::<String, Article>::new()))
         .attach(cors)
         .launch();
 
