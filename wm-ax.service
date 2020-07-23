@@ -1,2 +1,13 @@
-cd backend && cargo run &
-cd frontend/blog && npm start &
+[Unit]
+Description=Rocket + React Web Applications
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/home/mw/wm-ax/frontend/blog
+Environment="ROCKET_ENV=prod"
+Environment="ROCKET_ADDRESS=127.0.0.1"
+Environment="ROCKET_PORT=8000"
+Environment="ROCKET_LOG=critical"
+ExecStart=/home/mw/wm-ax/wm-ax-start.sh
+[Install]
+WantedBy=multi-user.target
