@@ -2,8 +2,8 @@
 Description=Rocket + React Web Applications
 
 [Service]
-User=www-data
-Group=www-data
+# User=www-data
+# Group=www-data
 WorkingDirectory=/home/mw/wm-ax
 Environment="ROCKET_ENV=prod"
 Environment="ROCKET_ADDRESS=127.0.0.1"
