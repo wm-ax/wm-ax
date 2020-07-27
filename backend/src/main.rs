@@ -198,6 +198,7 @@ fn article_detail(sought_slug: String) -> Json<Article> {
 }
 
 
+
 #[get("/article")]
 fn article_list() -> Json<Vec<Article>> {
 
@@ -206,7 +207,6 @@ fn article_list() -> Json<Vec<Article>> {
     let connection = establish_connection();
     let results = articles
         .filter(published.eq(true))
-        // .limit(5)
         .load::<Article>(&connection)
         .expect("Error loading posts");
         
@@ -258,7 +258,7 @@ fn main() -> Result<(), Error> {
     rocket::ignite()
         .mount("/api", routes![
             // search,
-            article_create, article_edit, article_detail, article_list,
+            article_create, article_detail, article_list,
         ])
         .register(catchers![not_found])
         .attach(cors)
