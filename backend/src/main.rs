@@ -1,8 +1,8 @@
 #![feature(proc_macro_hygiene, decl_macro)]
 
-extern crate itertools;
+// extern crate itertools;
 
-use itertools::Itertools;
+// use itertools::Itertools;
 
 #[macro_use] extern crate rocket;
 #[macro_use] extern crate rocket_contrib;
@@ -11,11 +11,11 @@ extern crate slug;
 
 #[cfg(test)] mod tests;
 
-use std::sync::Mutex;
-use std::collections::HashMap;
-use slug::slugify;
+// use std::sync::Mutex;
+// use std::collections::HashMap;
+// use slug::slugify;
 
-use rocket::State;
+// use rocket::State;
 use rocket_contrib::json::{Json, JsonValue};
 // use rocket::response::content;
 // use serde_json::json;
@@ -184,19 +184,17 @@ fn article_create(new_article: Json<ArticleStarter>)
 
 
 #[get("/article/<sought_slug>")]
-fn article_detail(sought_slug: String) -> Json<Article> {
+fn article_detail(sought_slug: String) -> Option<Json<Article>> {
 
     use schema::articles::dsl::*;
 
     let connection = establish_connection();
-
-    let article = articles.filter(id.eq(1))
+ 
+    articles.filter(id.eq(1))
         .load::<Article>(&connection)
-        .expect("Couldn't load article");
-
-    Json(article[1].clone())
+        .expect("Couldn't load article")
+        .get(1).map(|a|Json(a.clone()))
 }
-
 
 
 #[get("/article")]
