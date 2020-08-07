@@ -13,7 +13,7 @@ extern crate slug;
 
 // use std::sync::Mutex;
 // use std::collections::HashMap;
-// use slug::slugify;
+use slug::slugify;
 
 // use rocket::State;
 use rocket_contrib::json::{Json, JsonValue};
@@ -64,19 +64,54 @@ use schema::articles;
 // }
 
 
-#[derive(Serialize, Deserialize, Clone, Debug, Insertable)]
-#[table_name="articles"]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct ArticleStarter<'a> {
     title: &'a str,
     content: &'a str,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, Insertable)]
+#[table_name="articles"]
+struct NewArticle<'a> {
+    title: &'a str,
+    content: &'a str,
+    slug: String,
+}
 
-// impl <'a> From<ArticleStarter>  for Article {
-//     fn from(starter: ArticleStarter) -> Self {
-//         Article {title: starter.title.to_string(),
-//                  content: starter.content,
-//                  slug: slugify(starter.title)}
+impl <'a> From<ArticleStarter<'a>> for NewArticle<'a> {
+    fn from(starter: ArticleStarter<'a> ) -> Self {
+        NewArticle {title: starter.title,
+                    content: starter.content,
+                    slug: slugify(starter.title)}
+    }
+}
+
+
+
+
+// impl Insertable for ArticleStarter {
+//     type Values = <(
+//         Option<diesel::dsl::Eq<articles::id, i32>>,
+//         Option<diesel::dsl::Eq<articles::title,  Varchar>>,
+//         Option<diesel::dsl::Eq<articles::content,  Text>>,
+//         Option<diesel::dsl::Eq<articles::published,  Bool>>,
+//         Option<diesel::dsl::Eq<articles::slug,  Varchar>>
+//     ) as diesel::insertable::Insertable<articles::table>>::Values;
+
+
+//     fn values(self) -> Self::Values {
+//         #[allow(non_shorthand_field_patterns)]
+//         let Self { title: ref title,
+//                    content: ref content,
+//         } = *self;
+//         let 
+//         diesel::insertable::Insertable::values((
+//             Some(::ExpressionMethods::eq(articles::id, id)),
+//             Some(::ExpressionMethods::eq(articles::title, title)),            
+//             Some(::ExpressionMethods::eq(articles::content, content)),
+//             Some(::ExpressionMethods::eq(articles::published, published)),
+//             Some(::ExpressionMethods::eq(articles::slug, slug))            
+//         ))
 //     }
 // }
 
@@ -98,17 +133,12 @@ pub fn establish_connection() -> PgConnection {
 
 // type ArticleMap = Mutex<HashMap<String, Article>>;
 
-fn insert_article_into_db<'a>(conn: &PgConnection, new_article: ArticleStarter)
+fn insert_article_into_db<'a>(conn: &PgConnection, article_starter: ArticleStarter)
                               -> Article {
     // use schema::articles;
 
-    // let new_article = ArticleStarter {
-    //     title: title,
-    //     content: content,
-    // };
-
     diesel::insert_into(articles::table)
-        .values(&new_article)
+        .values(&NewArticle::from(article_starter))
         .get_result(conn)
         .expect("Error saving article")
 }
@@ -125,6 +155,8 @@ fn article_create(new_article: Json<ArticleStarter>)
     //     .expect("Error saving article");
 
     let article = insert_article_into_db(&conn, new_article.0.into());
+
+    print!("{:?}", article);
 
     json!({"status": "Ok"})
     // let mut hashmap = map.lock().expect("map lock");
@@ -204,11 +236,13 @@ fn article_list() -> Json<Vec<Article>> {
 
     let connection = establish_connection();
     let results = articles
-        .filter(published.eq(true))
+        // .filter(published.eq(true))
         .load::<Article>(&connection)
         .expect("Error loading posts");
         
-    Json(results)
+    let ret = Json(results);
+    print!("returned the following results: {:?}", ret);
+    ret
 }
 
 

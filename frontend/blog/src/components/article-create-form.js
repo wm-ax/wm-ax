@@ -7,18 +7,20 @@ const ENDPOINT_URL = `/article`;
 
 const initialArticle = {title: "", content: ""};
 
-const [minTitleLength, maxTitleLength] = [3, 100];
-const [minArticleLength, maxArticleLength] = [10, 100000];
+const [minTitleLength, maxTitleLength] = [1, 100];
+const [minArticleLength, maxArticleLength] = [3, 100000];
 
 
 function reducer (article, action) {
+    // console.log("ACTION TYPE: " + action.type);
     switch (action.type) {
     case 'inputChange':
         return {...article,
                 [action.name]: action.value};
     case 'submit':
-        axios.post(API_URL+ENDPOINT_URL,
-                  article);        
+        // console.log("SUBMITTED THIS ARTICLE: ", article);
+        let res = axios.post(API_URL+ENDPOINT_URL,
+                             article);
         return article;
     default:
         throw new Error(`dispatcher didn't match the given action type ${action.type}`);
