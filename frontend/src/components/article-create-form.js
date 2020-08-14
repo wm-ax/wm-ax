@@ -12,15 +12,13 @@ const [minArticleLength, maxArticleLength] = [3, 100000];
 
 
 function reducer (article, action) {
-    // console.log("ACTION TYPE: " + action.type);
     switch (action.type) {
     case 'inputChange':
         return {...article,
                 [action.name]: action.value};
     case 'submit':
-        // console.log("SUBMITTED THIS ARTICLE: ", article);
-        let res = axios.post(API_URL+ENDPOINT_URL,
-                             article);
+        axios.post(API_URL+ENDPOINT_URL,
+                  article);        
         return article;
     default:
         throw new Error(`dispatcher didn't match the given action type ${action.type}`);
@@ -29,7 +27,7 @@ function reducer (article, action) {
 
 
 function ArticleCreateForm() {
-    const [, articleDispatch] = useReducer(reducer, initialArticle);
+    const [_, articleDispatch] = useReducer(reducer, initialArticle);
     const onChange = (event) => articleDispatch(
                 {type: 'inputChange',
                  name: `${event.target.name}`,
@@ -64,7 +62,9 @@ function ArticleCreateForm() {
             onChange={onChange}
           />
           <br/>
-          <button type="submit">submit</button>
+          <button type="submit">
+            submit
+          </button>
         </form>
     );
 }

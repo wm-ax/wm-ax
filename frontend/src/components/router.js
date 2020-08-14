@@ -6,7 +6,7 @@ import {
     // Link
 } from "react-router-dom";
 
-import LatestPosts from '../views/latest_posts.js';
+import Home from '../views/home.js';
 import NewPost from '../views/new_post.js';
 import PostDetail from '../views/post_detail.js';
 
@@ -15,13 +15,12 @@ const Router = ({className}) =>
         <BrowserRouter>
           <Switch>
             <Route exact path="/">
-              <LatestPosts/>
+              <Home/>
             </Route>
             <Route exact path="/articles/new">
               <NewPost/>
             </Route>
             <Route exact path="/articles/:slug" component={PostDetail}>
-              {/* <PostDetail slug=slug/> */}
             </Route>
           </Switch>
         </BrowserRouter>

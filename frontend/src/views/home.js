@@ -20,7 +20,7 @@ async function getPosts(setPosts) {
 
 
 
-function LatestPosts(props) {
+function Home(props) {
 
     const URL = API_URL+ENDPOINT_URL;            
 
@@ -62,4 +62,4 @@ function LatestPosts(props) {
 
 
 
-export default LatestPosts;
+export default Home;

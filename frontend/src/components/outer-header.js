@@ -5,16 +5,17 @@ const OuterHeader = () =>
       <div className="flex justify-between">
         <div className="flex">
           <nav className="views-nav">
-            <a href="/" className="link dib black dim mr2 mr3-ns">Home
+            <a href="/" className="link dib black dim mr2 mr3-ns">
+              home
             </a> 
-            <a href="/topics" className="link dib black dim mr2 mr3-ns">
-              Topics
+            <a href="/recipes" className="link dib black dim mr2 mr3-ns">
+              recipes
             </a>
-            <a href="/communities" className="link dib black dim mr2 mr3-ns">
-              Communities
+            <a href="/pictures" className="link dib black dim mr2 mr3-ns">
+              pictures
             </a>
-            <a href="/profiles" className="link dib black dim mr2 mr3-ns">
-              Profiles
+            <a href="/articles/new" className="link dib black dim mr2 mr3-ns">
+              compose
             </a>
           </nav>
           <Search className="mr3"/>

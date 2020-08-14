@@ -2,8 +2,8 @@ import React from 'react';
 import {Helmet} from 'react-helmet';
 
 // import Fetchers from './utilities/fetchers.js';
-import Router from './utilities/router.js';
-// import OuterHeader from './components/outer-header.js';
+import Router from './components/router.js';
+import OuterHeader from './components/outer-header.js';
 
 const App = () =>
       <div className="ma3 mw7">
@@ -11,8 +11,7 @@ const App = () =>
           <meta charSet="utf-8" />
           <title>MMW</title>
         </Helmet>
-        <h1>the app</h1>
-        {/* <OuterHeader/> */}
+        <OuterHeader/>
         <Router/>
       </div>; 
 
