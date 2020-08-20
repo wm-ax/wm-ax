@@ -17,7 +17,7 @@ const Router = ({className}) =>
             <Route exact path="/">
               <Home/>
             </Route>
-            <Route exact path="/articles/new">
+            <Route exact path="/compose">
               <NewPost/>
             </Route>
             <Route exact path="/articles/:slug" component={PostDetail}>

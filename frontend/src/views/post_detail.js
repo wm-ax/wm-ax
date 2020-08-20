@@ -1,8 +1,7 @@
-import React, { Component, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-import { API_URL } from '../settings.js';
+import { API_URLS } from '../urls.js';
 
 function PostDetail(props) {
 
@@ -10,7 +9,7 @@ function PostDetail(props) {
 
     let slug = props.match.params.slug;
 
-    const endpoint_url = API_URL + `/article/${slug}`;
+    const api_url = API_URLS.article_detail(slug);
 
     useEffect(() => {
         async function getPost(url) {
@@ -21,9 +20,9 @@ function PostDetail(props) {
                 console.log("error", error);
             }
         }
-        getPost(endpoint_url);
+        getPost(api_url);
     }, 
-              [endpoint_url]);
+              [api_url]);
 
 
     return post === null ? "no post here" : (

@@ -27,7 +27,7 @@ function reducer (article, action) {
 
 
 function ArticleCreateForm() {
-    const [_, articleDispatch] = useReducer(reducer, initialArticle);
+    const [, articleDispatch] = useReducer(reducer, initialArticle);
     const onChange = (event) => articleDispatch(
                 {type: 'inputChange',
                  name: `${event.target.name}`,
