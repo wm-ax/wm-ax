@@ -1,9 +1,9 @@
 import React, { useReducer } from 'react';
 import axios from 'axios';
 
-const API_URL = `http://localhost:8000/api`;
+import { API_URLS } from '../urls';
 
-const ENDPOINT_URL = `/article`;
+
 
 const initialArticle = {title: "", content: ""};
 
@@ -17,7 +17,7 @@ function reducer (article, action) {
         return {...article,
                 [action.name]: action.value};
     case 'submit':
-        axios.post(API_URL+ENDPOINT_URL,
+        axios.post(API_URLS.article_compose,
                   article);        
         return article;
     default:
