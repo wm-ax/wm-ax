@@ -12,7 +12,7 @@ export const FRONTEND_URLS = {article_detail, compose, home};
 
 
 export const API_URLS = {article_list : API_ROOT_URL + `/article`,
-                         article_compose : slug => API_ROOT_URL + `/article/`,
+                         article_compose : API_ROOT_URL + `/article/`,
                          article_detail : slug => API_ROOT_URL + `/article/` + slug,
                         };
 
