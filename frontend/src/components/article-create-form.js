@@ -1,7 +1,8 @@
 import React, { useReducer } from 'react';
+import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 
-import { API_URLS } from '../urls';
+import { API_URLS, FRONTEND_URLS } from '../urls';
 
 
 
@@ -18,7 +19,12 @@ function reducer (article, action) {
                 [action.name]: action.value};
     case 'submit':
         axios.post(API_URLS.article_compose,
-                  article);        
+                   article)
+        .then((response) => {
+            console.log(response);
+        }, (error) => {
+            console.log(error);
+        });
         return article;
     default:
         throw new Error(`dispatcher didn't match the given action type ${action.type}`);
@@ -33,9 +39,14 @@ function ArticleCreateForm() {
                  name: `${event.target.name}`,
                  value: `${event.target.value}`});
 
+    const history = useHistory();
+
     return (
         <form
-          onSubmit={() => articleDispatch({type: 'submit' })}
+          onSubmit={() => {
+              articleDispatch({type: 'submit' });
+              history.push(FRONTEND_URLS.home);
+          }}
         >
           <label htmlFor="title">
             title:

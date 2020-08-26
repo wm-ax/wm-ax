@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 import { API_URLS, FRONTEND_URLS } from '../urls.js';
@@ -28,15 +29,13 @@ function Home(props) {
         <ol>
           {posts.map(
               (post) =>
-                  <div>
                   <li key={post.title}>
                       <h3>
-                        <a href={FRONTEND_URLS.article_detail(post.slug)}>
+                        <Link to={FRONTEND_URLS.article_detail(post.slug)}>
                           {post.title}
-                        </a>
+                        </Link>
                       </h3>
                     </li>
-                  </div>
           )}
         </ol>
     );
