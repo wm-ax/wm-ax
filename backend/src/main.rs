@@ -83,7 +83,7 @@ fn article_detail(sought_slug: String) -> Option<Json<Article>> {
     use schema::articles::dsl::*;
 
     let connection = establish_connection();
- 
+    
     print!("sought slug: {}\n", sought_slug);
     let a = articles.filter(slug.eq(sought_slug))
         .load::<Article>(&connection)
@@ -101,10 +101,10 @@ fn article_list() -> Json<Vec<Article>> {
 
     let connection = establish_connection();
     let results = articles
-        // .filter(published.eq(true))
+    // .filter(published.eq(true))
         .load::<Article>(&connection)
         .expect("Error loading posts");
-        
+    
     let ret = Json(results);
     print!("returned the following results: {:?}", ret);
     ret
@@ -131,11 +131,9 @@ fn not_found() -> JsonValue {
 
 
 
-
-
 fn main() -> Result<(), Error> {
 
-   let allowed_origins = AllowedOrigins::all();
+    let allowed_origins = AllowedOrigins::all();
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins,
