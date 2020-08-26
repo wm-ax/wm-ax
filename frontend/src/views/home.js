@@ -29,7 +29,7 @@ function Home(props) {
           {posts.map(
               (post) =>
                   <div>
-                    <li>
+                  <li key={post.title}>
                       <h3>
                         <a href={FRONTEND_URLS.article_detail(post.slug)}>
                           {post.title}

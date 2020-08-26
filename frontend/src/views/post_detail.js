@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import ReactMarkdown from 'react-markdown';
 
 import { API_URLS } from '../urls.js';
+import CodeBlock from '../utilities/codeblock';
+
+// const ReactMarkdown = require('react-markdown')
+
 
 function PostDetail(props) {
 
@@ -28,7 +33,13 @@ function PostDetail(props) {
     return post === null ? "no post here" : (
         <div>
           <h3>{post.title}</h3>
-          <p>{post.content}</p>
+          <ReactMarkdown
+            source={post.content}
+            renderers={{code: CodeBlock}}
+          />
+          {/*   <p>{post.content}</p> */}
+          {/* <h3>{post.title}</h3> */}
+          {/* <p>{post.content}</p> */}
         </div>
     );
 }
