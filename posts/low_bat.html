@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>low_bat</title>
+  <title>low battery in Arch Linux</title>
   <style>
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
@@ -80,11 +80,16 @@
   <![endif]-->
 </head>
 <body>
-<h1 id="sleep-if-the-battery-is-low-arch-linux">Sleep if the battery is low (Arch Linux)</h1>
-<p>After I switched to Linux, the biggest annoyance in my setup was a seeming triviality: the resulting system gave no low battery warning, but simply shut down when the battery ran out. Eventually I got around to fixing this.</p>
-<p>The solution I’m using has two parts. First, write a shell script to check whether the battery level falls below some threshold, and to hibernate the machine if it is. Second, create a systemd service to run the script at regular intervals.</p>
+<header id="title-block-header">
+<h1 class="title">low battery in Arch Linux</h1>
+</header>
+<h1 id="low-battery-warning-on-linux">low battery warning on linux</h1>
+<p>After getting comfortable with the terminal in OS X, I decided to go whole hog and switch to Arch Linux. Things went more smoothly than I expected, except for one thing. I’d be typing away on some project when without warning the machine would shut down, because the battery had run out.</p>
+<p>A solution has two main components: * a shell script which * tests whether the battery is low, and * emits some kind of warning if it is * a daemon which runs the shell script at regular intervals.</p>
 <h2 id="the-shell-script">1. The shell script</h2>
-<p>According to general Unix design, “everything is a file”. This includes battery data:</p>
+<p>To write the shell script, we need to determine when the user should be warned, and then implement the warning itself.</p>
+<h3 id="when-to-warn">When to warn?</h3>
+<p>Checking the battery level is pretty straightforward. According to general Unix design, “everything is a file”. In particular:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="fu">ls</span> /sys/class/power_supply/BAT0</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ex">alarm</span>                   device              model_name     subsystem</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ex">capacity</span>                energy_full         power          technology</span>
@@ -96,16 +101,16 @@
 <div class="sourceCode" id="cb2"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="fu">cat</span> /sys/class/power_supply/BAT0/capacity</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="ex">84</span></span></code></pre></div>
 <p>reveals that the battery is 84% full.</p>
-<p>To hook the battery level into a shell script, we can run the above command and store its result in a variable:</p>
+<p>To hook the battery level into a shell script, run the above command and store its result in a variable:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="va">capacity=</span><span class="kw">`</span><span class="fu">cat</span> /sys/class/power_supply/BAT0/capacity<span class="kw">`</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="bu">echo</span> <span class="va">$capacity</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="ex">78</span></span></code></pre></div>
-<p>Our goal is for the machine to sleep if the capacity falls below some threshold percentage: but we likely also want this to happen only if the battery is discharging. How to detect this? After unplugging the charger, you should find:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="va">status=</span><span class="kw">`</span><span class="fu">cat</span> /sys/class/power_supply/BAT0/status<span class="kw">`</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="bu">echo</span> <span class="va">$status</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="ex">Discharging</span></span></code></pre></div>
-<p>We also need to decide how low the battery should be allowed to fall, for example:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="va">THRESHOLD=</span>5</span></code></pre></div>
+<p>Next, choose some precise battery level as “low”, for example: We also need to decide how low the battery should be allowed to fall, for example:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="va">THRESHOLD=</span>5</span></code></pre></div>
+<p>Finally, note that when the capacity is below threshold, we may want to be warned only the battery is discharging. After unplugging the charger, you should find:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="va">status=</span><span class="kw">`</span><span class="fu">cat</span> /sys/class/power_supply/BAT0/status<span class="kw">`</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="bu">echo</span> <span class="va">$status</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ex">Discharging</span></span></code></pre></div>
 <p>The desired logic now looks like this:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">if [[</span> <span class="st">&quot;</span><span class="va">$status</span><span class="st">&quot;</span> <span class="ot">=</span> Discharging &amp;&amp; <span class="va">$capacity</span> <span class="ot">-lt</span> <span class="va">$THRESHOLD</span><span class="kw"> ]]</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">then</span></span>
@@ -116,19 +121,42 @@
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="ex">I</span><span class="st">&#39;m ok</span></span></code></pre></div>
 <p>I enquoted <code>$status</code> because I don’t know that none of its possible string values contain something syntactically problematic like whitespace. For readability I used double brackets and ‘&amp;&amp;’ in the condition, which means that the script must run with bash rather than with sh.</p>
 <p>You can now test each of four relevant possibilities by plugging or unplugging your charger, and adjusting <code>$THRESHOLD</code> above or below your current battery level. Note that the system will scale the threshold to an estimate of your battery’s actual maximum capacity, rather than to its nominal factory-rated capacity.</p>
-<p>Of course we want the machine actually to sleep, not just to log a message. Initially I tried:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">systemctl</span> hibernate</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>[<span class="ex">pffff...</span> ]</span></code></pre></div>
-<p>According to the <a href="https://wiki.archlinux.org/index.php/Power_management/Suspend_and_hibernate">Arch docs</a>, <code>hibernate</code> means “save the state to swap space and poweroff completely”. I’d really rather the machine just did what it does when the lid is closed, i.e., “save state to RAM and cut off power to most systems”. The command for that is <code>systemctl suspend</code>.</p>
-<p>When we run the script in the background, it will be helpful to have logged its behavior. Since systemd sends stdout to syslog, we can log results with <code>echo</code>.</p>
-<p>We can now put the pieces together.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">if [[</span> <span class="st">&quot;</span><span class="va">$status</span><span class="st">&quot;</span> <span class="ot">=</span> Discharging &amp;&amp; <span class="va">$capacity</span> <span class="ot">-lt</span> <span class="va">$THRESHOLD</span><span class="kw"> ]]</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">then</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="op">&gt;</span> <span class="bu">echo</span> <span class="st">&quot;battery level critical!&quot;</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a><span class="op">&gt;</span> <span class="ex">systemctl</span> suspend</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">else</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="op">&gt;</span> <span class="bu">echo</span> <span class="st">&quot;checked battery level&quot;</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="op">&gt;</span> <span class="kw">fi</span></span></code></pre></div>
+<h3 id="how-to-warn">how to warn?</h3>
+<p>The above script just sends “I’m ok” to stdout. This is useful for testing. But if, for example, the script is run by a systemd service, then stdout disappears into syslog. Of course, this is not helpful for the user who is simply forgetting to check the battery status. Here are a few alternatives.</p>
+<ol start="0" type="1">
+<li><em>Sleep the machine.</em> To do this, simply replace the <code>echo</code> line in the above script with</li>
+</ol>
+<pre><code>systemctl suspend</code></pre>
+<p>I numbered this ‘0’ because you may not really consider it a “warning”.</p>
+<ol type="1">
+<li><em>Print a shell message with the wall utility.</em> This is the simplest I could think of, but it works only if you are using a shell:</li>
+</ol>
+<pre><code>&gt; wall &quot;the battery is low!&quot;</code></pre>
+<ol start="2" type="1">
+<li><em>Toggle the screen brightness.</em> The xbacklight utility lets you set your screen brightness from the command line. For example</li>
+</ol>
+<pre><code>&gt; xbacklight -set 50</code></pre>
+<p>sets the screen brightness to 50%. So to toggle the brightness once per second for ten seconds, you can do:</p>
+<pre><code>FREQUENCY=.5
+DURATION=10
+initial_brightness=`xbacklight`
+for t in {1..$DURATION}
+do 
+    xbacklight -set 10 &amp;&amp; sleep $FREQUENCY 
+    xbacklight -set 100 &amp;&amp; sleep FREQUENCY
+done
+xbacklight -set $initial_brightness</code></pre>
+<ol start="3" type="1">
+<li><em>Send a text message to your phone.</em> Using the third-party API Textbelt, you can send a text message via curl!</li>
+</ol>
+<pre><code>&gt; curl -X POST https://textbelt.com/text \ 
+&gt; --data-urlencode phone=&#39;&lt;cell-number&gt;&#39; \
+&gt; --data-urlencode message=&#39;your battery is low!&#39; \
+&gt; -d key=textbelt</code></pre>
+<ol start="4" type="1">
+<li><em>Dialog-style notification.</em> The OS X battery warning superimposes a dialog over just about any display content. Arch Linux doesn’t supply this ability out-of-the-box. Notification has two components: a client which sends a notification request over DBus, and a server which receives the request and displays the notification. For example, you can install the packages notify-send and dunst. Then the instruction is simple:</li>
+</ol>
+<pre><code>&gt; notify-send &#39;the battery is low!&#39;</code></pre>
 <h2 id="running-the-script">2. Running the script</h2>
 <p>The above sequence of shell commands will get the machine to sleep if the battery level falls below some threshold. Instead of just typing the commands into the shell, we now want to save them as a script and then configure the machine to run the script at regular intervals.</p>
 <p>The man pages for hier suggest where to put the script in the Linux filesystem hierarchy:</p>
